@@ -60,9 +60,10 @@ from torch.utils.data import Dataset, DataLoader
 from transformers import Trainer, TrainingArguments
 
 # Create sample data
-x = torch.tensor([0, 1, 2, 3, 4, 5, 6], dtype=torch.float32).unsqueeze(1)  # (7, 1)
-y = torch.tensor([3, 5, 7, 9, 11, 13, 15], dtype=torch.float32).unsqueeze(1)  # (7, 1)
-
+x_train = torch.tensor([0, 1, 2, 3, 4, 5, 6], dtype=torch.float32).unsqueeze(1)  # (7, 1)
+y_train = torch.tensor([3, 5, 7, 9, 11, 13, 15], dtype=torch.float32).unsqueeze(1)  # (7, 1)
+x_eval = torch.tensor([7, 8], dtype=torch.float32).unsqueeze(1)  # (7, 1)
+y_eval = torch.tensor([17, 19], dtype=torch.float32).unsqueeze(1)  # (7, 1)
 # Define Dataset
 class CustomDataset(Dataset):
     def __init__(self, x, y):
@@ -89,34 +90,48 @@ class SimpleModel(nn.Module):
             loss = nn.MSELoss()(outputs, labels)  # Compute loss if labels are provided
         return {'loss': loss, 'logits': outputs} if loss is not None else outputs
 
-# Initialize model
-model = SimpleModel()
+# # Initialize model
+# model = SimpleModel()
 
-# Configure TrainingArguments
-training_args = TrainingArguments(
-    output_dir='./results',          # Output directory
-    num_train_epochs=300,           # Number of training epochs
-    per_device_train_batch_size=4,   # Batch size per device
-    gradient_accumulation_steps=4,   # Steps for gradient accumulation
-    logging_dir='./logs',            # Directory for logs
-    logging_steps=10,                # Log every 10 steps
-    learning_rate=0.02,
-    save_strategy="steps",           # Save the model at regular steps
-    save_steps=10,                   # Save every 10 steps
-    max_grad_norm=1.0,               # Gradient clipping
-    lr_scheduler_type="linear",       # Linear learning rate scheduler
-)
+# # Configure TrainingArguments
+# training_args = TrainingArguments(
+#     output_dir='./results',          # Output directory
+#     num_train_epochs=300,           # Number of training epochs
+#     per_device_train_batch_size=4,   # Batch size per device
+#     gradient_accumulation_steps=4,   # Steps for gradient accumulation
+#     logging_dir='./logs',            # Directory for logs
+#     logging_steps=10,                # Log every 10 steps
+#     learning_rate=0.02,
+#     save_strategy="steps",           # Save the model at regular steps
+#     save_steps=10,                   # Save every 10 steps
+#     max_grad_norm=1.0,               # Gradient clipping
+#     lr_scheduler_type="linear",       # Linear learning rate scheduler
+#     load_best_model_at_end=True,
+#     eval_steps=10,
+#     eval_strategy="steps",
+    
+# )
 
-# Initialize Dataset
-dataset = CustomDataset(x, y)
+# # Initialize Dataset
+# train_dataset = CustomDataset(x_train, y_train)
+# eval_dataset = CustomDataset(x_eval, y_eval)
+# # Define Trainer
+# trainer = Trainer(
+#     model=model,                        # Model
+#     args=training_args,                 # Training arguments
+#     train_dataset=train_dataset,              # Training dataset
+#     eval_dataset=eval_dataset
+# )
 
-# Define Trainer
-trainer = Trainer(
-    model=model,                        # Model
-    args=training_args,                 # Training arguments
-    train_dataset=dataset,              # Training dataset
-)
+# # Train the model
+# trainer.train()
+# torch.save(model.state_dict(), 'model_weights.bin')
+# x_test = torch.tensor([10], dtype=torch.float32).unsqueeze(1)
+# y_test = torch.tensor([23], dtype=torch.float32).unsqueeze(1)  # Dummy label
+# test_dataset = CustomDataset(x_test, y_test)
 
-# Train the model
-trainer.train()
-
+# # Dự đoán
+# test_outputs = trainer.predict(test_dataset)
+# print(test_outputs)
+# # In kết quả
+# print("Kết quả dự đoán:", test_outputs.predictions)
