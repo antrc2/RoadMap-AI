@@ -10,9 +10,10 @@ from sklearn.metrics import accuracy_score
 datasets = load_dataset("ylecun/mnist")
 
 # Define transforms
+# Thực hiện các phéo biến đổi. 
 transform = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize((0.5,), (0.5,))
+    transforms.ToTensor(), # Thực hiện ToTensor là đưa kiểu dữ liệu PIL Image sang Tensor array
+    transforms.Normalize((0.5,), (0.5,)) # Chuyển từ pixel từ 0-255 sang -1 - 1
 ])
 
 # Custom dataset
@@ -23,13 +24,14 @@ class CustomDataset(Dataset):
         self.transform = transform
 
     def __len__(self):
-        return len(self.images)
+        return len(self.images) # len của dataaset
 
     def __getitem__(self, idx):
         image = self.images[idx]
         label = self.labels[idx]
         if self.transform:
             image = self.transform(image)
+        # Ở phần này, nhãn yêu cầu ở kiểu dữ liệu Tensor chứ không phải INT thường, nên phải ép về kiểu Long torch.int64 để sử dụng CrossEntropyLoss
         return {'pixel_values': image, 'label': torch.tensor(label, dtype=torch.long)}
 
 # Create datasets
@@ -40,15 +42,15 @@ eval_dataset = CustomDataset(datasets['test']['image'], datasets['test']['label'
 class SimpleModel(nn.Module):
     def __init__(self):
         super(SimpleModel, self).__init__()
-        self.fc1 = nn.Linear(28*28, 128)
-        self.fc2 = nn.Linear(128, 64)
-        self.fc3 = nn.Linear(64, 10)
+        self.fc1 = nn.Linear(28*28, 128) # chỗ này là truyền và 784 pixel, và nhận về 128
+        self.fc2 = nn.Linear(128, 64) # truyền tiếp ào 128, nhận về 64
+        self.fc3 = nn.Linear(64, 10) # truyền vào 64, nhận vè 10 từ 0-9 tương ứng với MNIST 
 
     def forward(self, pixel_values, labels=None):
-        x = pixel_values.view(-1, 28*28)
-        x = torch.relu(self.fc1(x))
-        x = torch.relu(self.fc2(x))
-        logits = self.fc3(x)
+        x = pixel_values.view(-1, 28*28) # Đưa về 784 chiều
+        x = torch.relu(self.fc1(x)) # Kích hoạt relu, từ 784 chiều, đưa về 128 chiều
+        x = torch.relu(self.fc2(x)) # Kích hoạt relu, từ 128 chiều, đưa về 64 chiều
+        logits = self.fc3(x) # Ở đây không sử dụng relu, vì ra sử dụng CrossEntropyLoss, hàm tự động áp dụng SoftMax 
         if labels is not None:
             loss_fn = nn.CrossEntropyLoss()
             loss = loss_fn(logits, labels)
@@ -65,7 +67,7 @@ model = SimpleModel().to(device)
 def compute_metrics(eval_pred):
     logits, labels = eval_pred
     predictions = torch.argmax(torch.tensor(logits), dim=-1)
-    accuracy = accuracy_score(labels, predictions)
+    accuracy = accuracy_score(labels, predictions) # Tính xác xuất trả lời đúng
     return {"accuracy": accuracy}
 
 # Configure TrainingArguments
